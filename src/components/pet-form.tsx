@@ -5,6 +5,9 @@ import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
 import { petFormSchema, TPetForm } from "@/lib/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { addPet, editPet } from "@/actions/action";
+import { toast } from "sonner";
+import usePetContext from "@/hooks/usePetContext";
 
 type PetFormProps = {
 	actionType: "add" | "edit";
@@ -12,29 +15,43 @@ type PetFormProps = {
 };
 
 export default function PetForm({ actionType, onFormSubmit }: PetFormProps) {
+	const { selectedPetId, selectedPet } = usePetContext();
 	const {
 		register,
+		formState: { errors },
 		trigger,
 		getValues,
-		formState: { errors },
-		reset,
 	} = useForm<TPetForm>({
 		resolver: zodResolver(petFormSchema),
+		defaultValues:
+			actionType === "edit"
+				? {
+						name: selectedPet?.name,
+						ownerName: selectedPet?.ownerName,
+						imageUrl: selectedPet?.imageUrl,
+						age: selectedPet?.age,
+						notes: selectedPet?.notes,
+				  }
+				: undefined,
 	});
-
-	const handleAction = async () => {
-		const formData = await trigger();
-
-		if (!formData) return;
-
-		const newPet = getValues();
-		console.log("🚀 ~ action ~ newPet:", newPet);
-		reset();
-		onFormSubmit();
-	};
-
 	return (
-		<form className="flex flex-col space-y-6" action={handleAction}>
+		<form
+			className="flex flex-col space-y-6"
+			action={async (formData) => {
+				let error;
+
+				if (actionType === "edit") {
+					error = await editPet(selectedPetId!, formData);
+				} else {
+					error = await addPet(formData);
+				}
+
+				if (error) {
+					toast.error(error?.message);
+					return;
+				}
+				onFormSubmit();
+			}}>
 			<div className="space-y-1">
 				<Label htmlFor="name">Name</Label>
 				<Input id="name" {...register("name")} />

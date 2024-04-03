@@ -1,16 +1,20 @@
 "use client";
 
-import { Pet } from "@/lib/type";
-import { createContext, ReactNode, useState } from "react";
+import { addPet } from "@/actions/action";
+import useSearchContext from "@/hooks/useSearchContext";
+import { PetEssentials } from "@/lib/type";
+import { Pet } from "@prisma/client";
+import { createContext, ReactNode, useMemo, useState } from "react";
 
 type TPetContext = {
+	filteredPets: Pet[] | null;
 	pets: Pet[] | null;
 	selectedPetId: string | null;
 	selectedPet: Pet | undefined;
 	handleChangeSelectedPet: (id: string) => void;
 	numberOfPets: number;
 	handleCheckoutPet: (id: string) => void;
-	handleAddPet: (pet: Pet) => void;
+	handleAddPet: (pet: PetEssentials) => void;
 } | null;
 
 type PetContextProviderProps = {
@@ -20,8 +24,8 @@ type PetContextProviderProps = {
 
 export const PetContext = createContext<TPetContext | null>(null);
 
-function PetContextProvider({ data, children }: PetContextProviderProps) {
-	const [pets, setPets] = useState<Pet[]>(data);
+function PetContextProvider({ data: pets, children }: PetContextProviderProps) {
+	const { searchText } = useSearchContext();
 	const [selectedPetId, setSelectedPetId] = useState<string | null>(null);
 
 	const handleChangeSelectedPet = (id: string) => {
@@ -32,17 +36,28 @@ function PetContextProvider({ data, children }: PetContextProviderProps) {
 
 	const selectedPet = pets?.find((pet) => pet.id === selectedPetId);
 
-	const handleAddPet = (pet: Pet) => {
-		setPets((prev) => [...(prev ?? []), pet]);
+	const handleAddPet = async (pet: PetEssentials) => {
+		const error = await addPet(pet);
+		if (error) {
+			console.log(error.message);
+			return;
+		}
 	};
 
 	const handleCheckoutPet = (id: string) => {
-		setPets((prev) => prev?.filter((pet) => pet.id !== id));
+		// setPets((prev) => prev?.filter((pet) => pet.id !== id));
 		setSelectedPetId(null);
 	};
 
+	const filteredPets = useMemo(() => {
+		return pets?.filter((pet) =>
+			pet.name.toLowerCase().includes(searchText.toLowerCase())
+		);
+	}, [pets, searchText]);
+
 	const contextValue = {
 		pets,
+		filteredPets,
 		selectedPetId,
 		handleChangeSelectedPet,
 		selectedPet,
