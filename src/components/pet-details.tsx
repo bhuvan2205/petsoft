@@ -3,12 +3,9 @@
 import usePetContext from "@/hooks/usePetContext";
 import Image from "next/image";
 import PetButton from "./pet-button";
-import { deletePet } from "@/actions/action";
-import { useTransition } from "react";
 
 export default function PetDetails() {
 	const { selectedPet, handleCheckoutPet } = usePetContext();
-	const [isPending, startTransition] = useTransition();
 
 	return (
 		<section className="flex flex-col h-full w-full">
@@ -31,12 +28,7 @@ export default function PetDetails() {
 							<PetButton actionType="edit">Edit</PetButton>
 							<PetButton
 								actionType="checkout"
-								disabled={isPending}
-								onClick={() => {
-									startTransition(async () => {
-										await deletePet(selectedPet?.id);
-									});
-								}}>
+								onClick={() => handleCheckoutPet(selectedPet?.id)}>
 								Checkout
 							</PetButton>
 						</div>

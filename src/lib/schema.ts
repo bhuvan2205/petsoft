@@ -20,7 +20,7 @@ export const petFormSchema = z
 	})
 	.transform((data) => ({
 		...data,
-		imageUrl: data.imageUrl || DEFAULT_PET_IMAGE,
+		imageUrl: data?.imageUrl || DEFAULT_PET_IMAGE,
 	}));
 
 export type TPetForm = z.infer<typeof petFormSchema>;

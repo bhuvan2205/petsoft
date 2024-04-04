@@ -1,26 +1,24 @@
 "use server";
 
-import { DEFAULT_PET_IMAGE } from "@/contants/image";
 import prisma from "@/lib/db";
-import { PetEssentials } from "@/lib/type";
+import { petFormSchema } from "@/lib/schema";
 import { sleep } from "@/lib/utils";
 import { revalidatePath } from "next/cache";
 
-export async function addPet(formData: unknown) {
-	await sleep(1000);
+export async function addPet(pet: unknown) {
+	await sleep(2000);
 
-	const pet: PetEssentials = {
-		name: formData.get("name"),
-		ownerName: formData.get("ownerName"),
-		age: parseInt(formData.get("age")),
-		imageUrl: formData.get("imageUrl") || DEFAULT_PET_IMAGE,
-		notes: formData.get("notes"),
-	};
+	const validatedPet = petFormSchema.safeParse(pet);
+
+	if (!validatedPet.success) {
+		return {
+			message: "Invalid pet data.",
+		};
+	}
+
 	try {
 		await prisma.pet.create({
-			data: {
-				...pet,
-			},
+			data: validatedPet.data,
 		});
 	} catch (error: unknown) {
 		return {
@@ -34,25 +32,23 @@ export async function addPet(formData: unknown) {
 	revalidatePath("/app", "layout");
 }
 
-export async function editPet(petId: string, formData: unknown) {
-	
-	await sleep(1000);
+export async function editPet(petId: string, pet: unknown) {
+	await sleep(2000);
 
-	const pet: PetEssentials = {
-		name: formData.get("name"),
-		ownerName: formData.get("ownerName"),
-		age: parseInt(formData.get("age")),
-		imageUrl: formData.get("imageUrl") || DEFAULT_PET_IMAGE,
-		notes: formData.get("notes"),
-	};
+	const validatedPet = petFormSchema.safeParse(pet);
+
+	if (!validatedPet.success) {
+		return {
+			message: "Invalid pet data.",
+		};
+	}
+
 	try {
 		await prisma.pet.update({
 			where: {
 				id: petId,
 			},
-			data: {
-				...pet,
-			},
+			data: validatedPet.data,
 		});
 	} catch (error: unknown) {
 		return {

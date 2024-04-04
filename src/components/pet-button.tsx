@@ -10,30 +10,25 @@ import {
 	DialogTrigger,
 } from "./ui/dialog";
 import PetForm from "./pet-form";
-import SpinningBtn from "./spinning-btn";
+import { flushSync } from "react-dom";
 
 type PetButtonProps = {
 	actionType: "edit" | "add" | "checkout";
 	children: ReactNode;
 	onClick?: () => void;
-	disabled?: boolean;
 };
 
 export default function PetButton({
 	children,
 	actionType,
 	onClick,
-	disabled,
 }: PetButtonProps) {
 	const [isFormOpen, setIsFormOpen] = useState(false);
 
 	if (actionType === "checkout") {
 		return (
-			<Button
-				variant="secondary"
-				disabled={disabled}
-				onClick={() => onClick?.()}>
-				{disabled ? <SpinningBtn variant="dark" /> : children}
+			<Button variant="secondary" onClick={() => onClick?.()}>
+				{children}
 			</Button>
 		);
 	}
@@ -56,7 +51,14 @@ export default function PetButton({
 						{actionType === "add" ? "Add a new pet" : "Edit pet"}
 					</DialogTitle>
 				</DialogHeader>
-				<PetForm onFormSubmit={toggleDialog} actionType={actionType} />
+				<PetForm
+					onFormSubmit={() => {
+						flushSync(() => {
+							toggleDialog();
+						});
+					}}
+					actionType={actionType}
+				/>
 			</DialogContent>
 		</Dialog>
 	);
