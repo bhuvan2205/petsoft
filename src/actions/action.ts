@@ -3,6 +3,7 @@
 import prisma from "@/lib/db";
 import { petFormSchema } from "@/lib/schema";
 import { sleep } from "@/lib/utils";
+import { Pet } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
 export async function addPet(pet: unknown) {
@@ -32,7 +33,7 @@ export async function addPet(pet: unknown) {
 	revalidatePath("/app", "layout");
 }
 
-export async function editPet(petId: string, pet: unknown) {
+export async function editPet(petId: Pet['id'], pet: unknown) {
 	await sleep(2000);
 
 	const validatedPet = petFormSchema.safeParse(pet);
@@ -62,7 +63,7 @@ export async function editPet(petId: string, pet: unknown) {
 	revalidatePath("/app", "layout");
 }
 
-export async function deletePet(petId: string) {
+export async function deletePet(petId: Pet['id']) {
 	try {
 		await prisma.pet.delete({
 			where: {
