@@ -41,10 +41,9 @@ export default function PetForm({ actionType, onFormSubmit }: PetFormProps) {
 				const results = await trigger();
 				if (!results) return;
 
-				const pet = getValues();
-				console.log("🚀 ~ action={ ~ pet:", pet);
-
 				onFormSubmit();
+				const pet = getValues();
+				pet.imageUrl = pet.imageUrl || DEFAULT_PET_IMAGE;
 
 				if (actionType === "edit") {
 					handleEditPet(selectedPetId!, pet);

@@ -12,7 +12,6 @@ type LayoutProps = {
 };
 
 export default async function Layout({ children }: LayoutProps) {
-	console.log("Layout rendering...");
 	const pets = await prisma.pet.findMany();
 
 	if (!pets?.length) {

@@ -16,7 +16,7 @@ export const petFormSchema = z
 			z.string().trim().url({ message: "Image url must be a valid url" }),
 		]),
 		age: z.coerce.number().int().positive().max(99),
-		notes: z.string().trim().max(500, "Cannot exceed 500 characters"),
+		notes: z.string().trim().min(10).max(500, "Cannot exceed 500 characters"),
 	})
 	.transform((data) => ({
 		...data,

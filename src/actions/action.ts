@@ -1,8 +1,8 @@
 "use server";
 
 import prisma from "@/lib/db";
-import { petFormSchema } from "@/lib/schema";
-import { sleep } from "@/lib/utils";
+import { petFormSchema, petIdSchema } from "@/lib/schema";
+import { handleErrors, sleep } from "@/lib/utils";
 import { Pet } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
@@ -22,23 +22,20 @@ export async function addPet(pet: unknown) {
 			data: validatedPet.data,
 		});
 	} catch (error: unknown) {
-		return {
-			message:
-				error instanceof Error
-					? (error?.message as string)
-					: "Could not add pet.",
-		};
+		const message = handleErrors(error, "Could not add pet.");
+		return message;
 	}
 
 	revalidatePath("/app", "layout");
 }
 
-export async function editPet(petId: Pet['id'], pet: unknown) {
+export async function editPet(petId: unknown, pet: unknown) {
 	await sleep(2000);
 
+	const validatedPetID = petIdSchema.safeParse(petId);
 	const validatedPet = petFormSchema.safeParse(pet);
 
-	if (!validatedPet.success) {
+	if (!validatedPet.success || !validatedPetID.success) {
 		return {
 			message: "Invalid pet data.",
 		};
@@ -47,36 +44,36 @@ export async function editPet(petId: Pet['id'], pet: unknown) {
 	try {
 		await prisma.pet.update({
 			where: {
-				id: petId,
+				id: validatedPetID.data,
 			},
 			data: validatedPet.data,
 		});
 	} catch (error: unknown) {
-		return {
-			message:
-				error instanceof Error
-					? (error?.message as string)
-					: "Could not edit pet.",
-		};
+		const message = handleErrors(error, "Could not edit pet.");
+		return message;
 	}
 
 	revalidatePath("/app", "layout");
 }
 
-export async function deletePet(petId: Pet['id']) {
+export async function deletePet(petId: unknown) {
+	const validatedPetID = petIdSchema.safeParse(petId);
+
+	if (!validatedPetID.success) {
+		return {
+			message: "Invalid pet data.",
+		};
+	}
+
 	try {
 		await prisma.pet.delete({
 			where: {
-				id: petId,
+				id: validatedPetID.data,
 			},
 		});
 	} catch (error) {
-		return {
-			message:
-				error instanceof Error
-					? (error?.message as string)
-					: "Could not edit pet.",
-		};
+		const message = handleErrors(error, "Could not delete pet.");
+		return message;
 	}
 
 	revalidatePath("/app", "layout");
