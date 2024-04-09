@@ -6,18 +6,24 @@ import PetContextProvider from "@/context/pet-context-provider";
 import SearchContextProvider from "@/context/search-context-provider";
 import prisma from "@/lib/db";
 import { ReactNode } from "react";
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
 type LayoutProps = {
 	children: ReactNode;
 };
 
 export default async function Layout({ children }: LayoutProps) {
-	const pets = await prisma.pet.findMany();
-
-	if (!pets?.length) {
-		throw new Error("Couldn't able to fetch pets!");
+	const session = await auth();
+	if (!session?.user) {
+		redirect("/login");
 	}
-
+	const pets = await prisma.pet.findMany({
+		where: {
+			ownerId: session?.user?.id,
+		},
+	});
+	
 	return (
 		<>
 			<BackgroundPattern />

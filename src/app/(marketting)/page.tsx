@@ -5,12 +5,13 @@ import Link from "next/link";
 
 export default function Home() {
 	return (
-		<main className="bg-[#5DC9A8] min-h-screen flex flex-col xl:flex-row items-center justify-center gap-10">
+		<main className="bg-[#5DC9A8] min-h-screen flex flex-col-reverse xl:flex-row items-center justify-center gap-10 md:flex-col">
 			<Image
 				src="https://bytegrad.com/course-assets/react-nextjs/petsoft-preview.png"
 				alt="Preview of PetSoft"
 				width={519}
 				height={472}
+				className="align-self-center"
 			/>
 
 			<div>
@@ -24,11 +25,11 @@ export default function Home() {
 					access for $299.
 				</p>
 				<div className="mt-10 space-x-3">
-				<Button asChild>
+					<Button asChild>
 						<Link href="/signup">Get Started</Link>
 					</Button>
 					<Button asChild variant="secondary">
-						<Link href="/signin">Sign in</Link>
+						<Link href="/login">Log in</Link>
 					</Button>
 				</div>
 			</div>
