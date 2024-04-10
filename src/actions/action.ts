@@ -8,18 +8,35 @@ import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import { checkAuth, getPetById } from "@/lib/server-utils";
 import { redirect } from "next/navigation";
+import { Prisma } from "@prisma/client";
+import { AuthError } from "next-auth";
 
 //  ------------------------------------------------------
 // 						AUTH actions
 // --------------------------------------------------------
 
-export async function login(formData: unknown) {
+export async function login(prev: unknown, formData: unknown) {
 	// Check if form data is valid
 	if (!(formData instanceof FormData)) {
 		return { message: "Invalid form data." };
 	}
 
-	await signIn("credentials", formData);
+	try {
+		await signIn("credentials", formData);
+	} catch (error) {
+		if (error instanceof AuthError) {
+			switch (error.type) {
+				case "CredentialsSignin": {
+					return { message: "Invalid credentials." };
+				}
+				default: {
+					return { message: "Not able to log in." };
+				}
+			}
+		}
+		const message = handleErrors(error, "Not able to log in.");
+		return message;
+	}
 
 	redirect("/app/dashboard");
 }
@@ -28,7 +45,9 @@ export async function logout() {
 	await signOut({ redirectTo: "/" });
 }
 
-export async function signUp(formData: FormData) {
+export async function signUp(prev: unknown, formData: FormData) {
+	await sleep(1000);
+
 	// Check if form data is valid
 	if (!(formData instanceof FormData)) {
 		return { message: "Invalid form data." };
@@ -54,7 +73,13 @@ export async function signUp(formData: FormData) {
 			},
 		});
 	} catch (error: unknown) {
-		const message = handleErrors(error, "Could not add pet.");
+		if (
+			error instanceof Prisma.PrismaClientKnownRequestError &&
+			error.code === "P2002"
+		) {
+			return { message: "Email already exists." };
+		}
+		const message = handleErrors(error, "Could not create user");
 		return message;
 	}
 
