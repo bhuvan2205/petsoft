@@ -7,7 +7,6 @@ import { handleErrors, sleep } from "@/lib/utils";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import { checkAuth, getPetById } from "@/lib/server-utils";
-import { redirect } from "next/navigation";
 import { Prisma } from "@prisma/client";
 import { AuthError } from "next-auth";
 
@@ -34,16 +33,13 @@ export async function login(prev: unknown, formData: unknown) {
 				}
 			}
 		}
-		const message = handleErrors(error, "Not able to log in.");
-		return message;
+		throw error; // next.js redirects throws error, so we need to rethrow it
 	}
-
-	redirect("/app/dashboard");
 }
 
 export async function logout() {
 	await signOut({ redirectTo: "/" });
-}
+}            
 
 export async function signUp(prev: unknown, formData: FormData) {
 	await sleep(1000);
