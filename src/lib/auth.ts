@@ -46,29 +46,57 @@ const config = {
 		// Runs every request
 		authorized: ({ auth, request }) => {
 			const isLoggedIn = Boolean(auth?.user);
-			const isTryToAccessApp = request.nextUrl.pathname.includes("/app");
+			const isAppRoute = request.nextUrl.pathname.includes("/app");
+			const isLoginRoute = request.nextUrl.pathname.includes("/login");
+			const isSignUpRoute = request.nextUrl.pathname.includes("/signup");
 
-			if (!isLoggedIn && isTryToAccessApp) {
-				return false;
-			}
-
-			if (!isLoggedIn && !isTryToAccessApp) {
+			if (!isLoggedIn && !isAppRoute) {
 				return true;
 			}
 
-			if (isLoggedIn && isTryToAccessApp) {
+			if (isLoggedIn && isAppRoute && !auth?.user.hasAccess) {
+				return Response.redirect(new URL("/payment", request.nextUrl));
+			}
+
+			if (isLoggedIn && isAppRoute && auth?.user.hasAccess) {
 				return true;
 			}
 
-			if (isLoggedIn && !isTryToAccessApp) {
+			if (
+				isLoggedIn &&
+				(isLoginRoute || isSignUpRoute) &&
+				auth?.user.hasAccess
+			) {
 				return Response.redirect(new URL("/app/dashboard", request.nextUrl));
+			}
+
+			if (isLoggedIn && !isAppRoute && !auth?.user.hasAccess) {
+				if (isLoginRoute || isSignUpRoute) {
+					return Response.redirect(new URL("/payment", request.nextUrl));
+				}
+
+				return true;
+			}
+
+			if (!isLoggedIn && isAppRoute) {
+				return false;
 			}
 
 			return false;
 		},
-		jwt: ({ token, user }) => {
+		jwt: async ({ token, user, trigger }) => {
 			if (user) {
 				token.ownerId = user.id;
+				token.hasAccess = user.hasAccess;
+				token.email = user.email!;
+			}
+
+			// When update the user
+			if (trigger === "update") {
+				const updatedUser = await getUserByEmail(token.email);
+				if (updatedUser) {
+					token.hasAccess = updatedUser.hasAccess;
+				}
 			}
 
 			return token;
@@ -76,6 +104,7 @@ const config = {
 		session: async ({ session, token }) => {
 			if (session.user) {
 				session.user.id = token.ownerId;
+				session.user.hasAccess = token.hasAccess;
 			}
 			return session;
 		},

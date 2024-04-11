@@ -9,6 +9,8 @@ import bcrypt from "bcryptjs";
 import { checkAuth, getPetById } from "@/lib/server-utils";
 import { Prisma } from "@prisma/client";
 import { AuthError } from "next-auth";
+import { redirect } from "next/navigation";
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 //  ------------------------------------------------------
 // 						AUTH actions
@@ -39,10 +41,9 @@ export async function login(prev: unknown, formData: unknown) {
 
 export async function logout() {
 	await signOut({ redirectTo: "/" });
-}            
+}
 
 export async function signUp(prev: unknown, formData: FormData) {
-	await sleep(1000);
 
 	// Check if form data is valid
 	if (!(formData instanceof FormData)) {
@@ -87,7 +88,6 @@ export async function signUp(prev: unknown, formData: FormData) {
 // --------------------------------------------------------
 
 export async function addPet(pet: unknown) {
-	await sleep(1000);
 	const session = await checkAuth();
 
 	const validatedPet = petFormSchema.safeParse(pet);
@@ -118,7 +118,6 @@ export async function addPet(pet: unknown) {
 }
 
 export async function editPet(petId: unknown, pet: unknown) {
-	await sleep(1000);
 	const session = await checkAuth();
 
 	const validatedPetID = petIdSchema.safeParse(petId);
@@ -162,7 +161,6 @@ export async function editPet(petId: unknown, pet: unknown) {
 }
 
 export async function deletePet(petId: unknown) {
-	await sleep(1000);
 	const session = await checkAuth();
 
 	const validatedPetID = petIdSchema.safeParse(petId);
@@ -201,4 +199,27 @@ export async function deletePet(petId: unknown) {
 	}
 
 	revalidatePath("/app", "layout");
+}
+
+//  ------------------------------------------------------
+// 						PAYMENT actions
+// --------------------------------------------------------
+
+export async function createCheckoutSession() {
+	const session = await checkAuth();
+	const checkoutSession = await stripe.checkout.sessions.create({
+		customer_email: session.user.email,
+		line_items: [
+			{
+				price: "price_1P43mhSJ28NGiTWwNPblAgsX",
+				quantity: 1,
+			},
+		],
+		mode: "payment",
+		success_url: `${process.env.CANONICAL_URL}/payment?success=true`,
+		cancel_url: `${process.env.CANONICAL_URL}/payment?cancelled=true`,
+	});
+
+	//redirect user
+	redirect(checkoutSession?.url);
 }
