@@ -50,8 +50,8 @@ const config = {
 			const isLoginRoute = request.nextUrl.pathname.includes("/login");
 			const isSignUpRoute = request.nextUrl.pathname.includes("/signup");
 
-			if (!isLoggedIn && !isAppRoute) {
-				return true;
+			if (!isLoggedIn && isAppRoute) {
+				return false;
 			}
 
 			if (isLoggedIn && isAppRoute && !auth?.user.hasAccess) {
@@ -78,8 +78,8 @@ const config = {
 				return true;
 			}
 
-			if (!isLoggedIn && isAppRoute) {
-				return false;
+			if (!isLoggedIn && !isAppRoute) {
+				return true;
 			}
 
 			return false;
