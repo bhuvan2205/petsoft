@@ -71,11 +71,11 @@ const config = {
 				}
 				return false;
 			} else {
-				if (!isPrivateRoute) {
-					return true;
-				}
 				if (isPaymentRoute) {
 					return Response.redirect(new URL("/login", request.nextUrl));
+				}
+				if (!isPrivateRoute) {
+					return true;
 				}
 				return false;
 			}
