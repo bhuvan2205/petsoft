@@ -1,5 +1,5 @@
 import { NextAuthConfig } from "next-auth";
-import { getUserByEmail } from "./server-utils";
+import prisma from "./db";
 
 export const nextAuthEdgeConfig = {
 	pages: {
@@ -38,7 +38,7 @@ export const nextAuthEdgeConfig = {
 						return true;
 					}
 				}
-				return false;
+				return true;
 			} else {
 				if (isPaymentRoute) {
 					return Response.redirect(new URL("/login", request.nextUrl));
@@ -58,7 +58,11 @@ export const nextAuthEdgeConfig = {
 
 			// When update the user
 			if (trigger === "update") {
-				const updatedUser = await getUserByEmail(token.email);
+				const updatedUser = await prisma.user.findUnique({
+					where: {
+						email: token.email,
+					},
+				});
 				if (updatedUser) {
 					token.hasAccess = updatedUser.hasAccess;
 				}
