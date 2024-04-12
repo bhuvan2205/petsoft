@@ -1,47 +1,10 @@
-import { authSchema, TAuth } from "./schema";
-import bcrypt from "bcryptjs";
-import NextAuth, { NextAuthConfig } from "next-auth";
-import Credentials from "next-auth/providers/credentials";
+import { NextAuthConfig } from "next-auth";
 import { getUserByEmail } from "./server-utils";
 
-const config = {
+export const nextAuthEdgeConfig = {
 	pages: {
 		signIn: "/login",
 	},
-	session: {
-		maxAge: 30 * 24 * 60 * 60,
-	},
-	providers: [
-		Credentials({
-			async authorize(credentials) {
-				// Run every logins
-
-				const validatedData = authSchema.safeParse(credentials);
-
-				if (!validatedData.success) {
-					return null;
-				}
-
-				const { email, password } = validatedData.data;
-
-				const user = await getUserByEmail(email);
-
-				if (!user) {
-					console.log("No User found!");
-					return null;
-				}
-
-				const isMatch = await bcrypt.compare(password, user.hashedPassword);
-
-				if (!isMatch) {
-					console.log("Invalid Credentials!");
-					return null;
-				}
-
-				return user;
-			},
-		}),
-	],
 	callbacks: {
 		// Runs every request
 		authorized: ({ auth, request }) => {
@@ -111,11 +74,5 @@ const config = {
 			return session;
 		},
 	},
+	providers: [],
 } satisfies NextAuthConfig;
-
-export const {
-	auth,
-	signIn,
-	signOut,
-	handlers: { GET, POST },
-} = NextAuth(config);
