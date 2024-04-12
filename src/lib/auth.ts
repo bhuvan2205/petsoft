@@ -67,7 +67,13 @@ const config = {
 						return Response.redirect(new URL("/payment", request.nextUrl));
 					}
 				} else if (isPaymentRoute) {
-					return true;
+					if (auth?.user?.hasAccess) {
+						return Response.redirect(
+							new URL("/app/dashboard", request.nextUrl)
+						);
+					} else {
+						return true;
+					}
 				}
 				return false;
 			} else {
